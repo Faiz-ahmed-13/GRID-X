@@ -8,12 +8,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Barlow+Condensed:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap');
 
 :root {
-  --red:    #e8001d;
-  --red2:   #ff3344;
-  --gold:   #c8a84b;
-  --text:   #eaeaec;
-  --dim:    #4a4a55;
-  --dim2:   #7a7a88;
+  --red:  #e8001d;
+  --red2: #ff3344;
+  --text: #eaeaec;
+  --dim:  #4a4a55;
+  --dim2: #7a7a88;
 }
 
 *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
@@ -22,105 +21,102 @@ html, body {
   width:100%; height:100%;
   background:#000;
   color:var(--text);
-  font-family:'Barlow Condensed', sans-serif;
+  font-family:'Barlow Condensed',sans-serif;
   overflow:hidden;
   user-select:none;
 }
 
-/* ── VIDEO LAYER ───────────────────────────────────────────── */
-#vid-wrap {
+/* ── LOADING SCREEN ─────────────────────────────────────── */
+#loading {
+  position:fixed; inset:0; z-index:999;
+  background:#000;
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:22px;
+  transition:opacity 0.8s ease;
+}
+#loading.fade { opacity:0; pointer-events:none; }
+
+.ld-logo {
+  font-family:'Orbitron',monospace; font-weight:900;
+  font-size:28px; letter-spacing:0.25em; color:var(--text);
+}
+.ld-logo span { color:var(--red); }
+
+.ld-track {
+  width:240px; height:2px;
+  background:rgba(255,255,255,0.07);
+  position:relative; overflow:hidden;
+}
+.ld-fill {
+  position:absolute; top:0; left:0;
+  height:100%; width:0%;
+  background:var(--red);
+  box-shadow:0 0 12px var(--red);
+  transition:width 0.3s ease;
+}
+.ld-txt {
+  font-family:'Share Tech Mono',monospace;
+  font-size:10px; letter-spacing:0.28em;
+  color:var(--dim2); text-transform:uppercase;
+}
+
+/* ── CANVAS ─────────────────────────────────────────────── */
+#cv {
   position:fixed; inset:0;
-  display:flex; align-items:center; justify-content:center;
+  width:100%; height:100%;
+  display:block;
+  cursor:grab;
 }
+body.dragging #cv { cursor:grabbing; }
 
-video {
-  width:80%; height:80%;
-  object-fit:contain;
-  position:absolute;
-  top:50%; left:50%;
-  transform:translate(-50%, -50%);
-  transition:opacity 0.5s ease;
-  -webkit-mask-image: linear-gradient(to right,  transparent 0%, black 12%, black 88%, transparent 100%),
-                      linear-gradient(to bottom, transparent 0%, black 10%, black 88%, transparent 100%);
-  -webkit-mask-composite: source-in;
-  mask-image: linear-gradient(to right,  transparent 0%, black 12%, black 88%, transparent 100%),
-              linear-gradient(to bottom, transparent 0%, black 10%, black 88%, transparent 100%);
-  mask-composite: intersect;
-}
-
-#v1 { opacity:1; }
-#v2 { opacity:0; pointer-events:none; }
-
-/* ── GRAIN ─────────────────────────────────────────────────── */
+/* ── OVERLAYS ───────────────────────────────────────────── */
 .grain {
   position:fixed; inset:0; pointer-events:none; z-index:5;
   background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
   opacity:0.35; mix-blend-mode:overlay;
 }
-
-/* ── SCAN LINE ─────────────────────────────────────────────── */
 .scan {
   position:fixed; inset:0; pointer-events:none; z-index:6;
   background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.04) 2px,rgba(0,0,0,0.04) 4px);
 }
-
-/* ── VIGNETTE ──────────────────────────────────────────────── */
 .vignette {
   position:fixed; inset:0; pointer-events:none; z-index:4;
-  background:radial-gradient(ellipse 85% 85% at 50% 50%, transparent 40%, rgba(0,0,0,0.92) 100%);
+  background:radial-gradient(ellipse 90% 90% at 50% 55%, transparent 35%, rgba(0,0,0,0.88) 100%);
 }
+.corner { position:fixed; z-index:20; width:40px; height:40px; pointer-events:none; }
+.corner.tl { top:16px; left:16px; border-top:1px solid rgba(232,0,29,0.2); border-left:1px solid rgba(232,0,29,0.2); }
+.corner.tr { top:16px; right:16px; border-top:1px solid rgba(232,0,29,0.2); border-right:1px solid rgba(232,0,29,0.2); }
+.corner.bl { bottom:36px; left:16px; border-bottom:1px solid rgba(232,0,29,0.2); border-left:1px solid rgba(232,0,29,0.2); }
+.corner.br { bottom:36px; right:16px; border-bottom:1px solid rgba(232,0,29,0.2); border-right:1px solid rgba(232,0,29,0.2); }
 
-/* header CSS removed — using site navbar */
+/* ── DRAG HINT ───────────────────────────────────────────── */
+#drag-hint {
+  position:fixed; bottom:78px; left:50%; transform:translateX(-50%);
+  z-index:50;
+  font-family:'Share Tech Mono',monospace;
+  font-size:10px; letter-spacing:0.3em; color:#fff;
+  text-transform:uppercase;
+  display:flex; align-items:center; gap:10px;
+  transition:opacity 0.5s;
+  text-shadow:0 1px 8px rgba(0,0,0,0.95);
+  animation:hintpulse 2.5s ease-in-out infinite;
+}
+#drag-hint.hidden { opacity:0; pointer-events:none; }
+@keyframes hintpulse { 0%,100%{opacity:0.6} 50%{opacity:1} }
+.hint-arrow { font-size:18px; display:inline-block; animation:sway 1.8s ease-in-out infinite; }
+@keyframes sway { 0%,100%{transform:translateX(0)} 50%{transform:translateX(6px)} }
 
-/* ── INSPECT BUTTON ────────────────────────────────────────── */
-#btn-inspect {
-  position:fixed; bottom:32px; left:50%; transform:translateX(-50%);
-  z-index:60;
-  font-family:'Orbitron',monospace; font-weight:700;
-  font-size:10px; letter-spacing:0.4em; text-transform:uppercase;
-  padding:14px 36px;
-  border:1px solid var(--red);
-  background:rgba(0,0,0,0.7);
-  color:var(--text);
-  cursor:pointer;
-  transition:all 0.25s;
-  backdrop-filter:blur(10px);
-  clip-path:polygon(12px 0%,100% 0%,calc(100% - 12px) 100%,0% 100%);
+/* ── ROTATION INDICATOR ──────────────────────────────────── */
+#rot-indicator {
+  position:fixed; bottom:78px; right:28px;
+  z-index:50;
+  font-family:'Share Tech Mono',monospace;
+  font-size:10px; letter-spacing:0.12em; color:#fff; line-height:2;
+  text-shadow:0 1px 8px rgba(0,0,0,0.95);
 }
-#btn-inspect::before {
-  content:'';
-  position:absolute; inset:0;
-  background:var(--red);
-  clip-path:polygon(12px 0%,100% 0%,calc(100% - 12px) 100%,0% 100%);
-  opacity:0; transition:opacity 0.25s;
-  z-index:-1;
-}
-#btn-inspect:hover::before { opacity:0.12; }
-#btn-inspect:hover { box-shadow:0 0 24px rgba(232,0,29,0.3); letter-spacing:0.5em; }
-#btn-inspect.hidden { opacity:0; pointer-events:none; transform:translateX(-50%) translateY(20px); transition:all 0.4s; }
+#rot-indicator b { color:var(--red); }
 
-/* ── REPLAY BUTTON ─────────────────────────────────────────── */
-#btn-replay {
-  position:fixed; bottom:32px; left:50%; transform:translateX(-50%) translateY(20px);
-  z-index:60;
-  font-family:'Orbitron',monospace; font-weight:700;
-  font-size:10px; letter-spacing:0.4em; text-transform:uppercase;
-  padding:14px 36px;
-  border:1px solid rgba(232,0,29,0.3);
-  background:rgba(0,0,0,0.7);
-  color:var(--dim2);
-  cursor:pointer;
-  transition:all 0.4s;
-  backdrop-filter:blur(10px);
-  clip-path:polygon(12px 0%,100% 0%,calc(100% - 12px) 100%,0% 100%);
-  opacity:0; pointer-events:none;
-}
-#btn-replay.visible {
-  opacity:1; pointer-events:all; transform:translateX(-50%) translateY(0);
-}
-#btn-replay:hover { border-color:var(--red); color:var(--text); box-shadow:0 0 20px rgba(232,0,29,0.2); }
-
-/* ── STATS OVERLAY ─────────────────────────────────────────── */
+/* ── STATS OVERLAY ───────────────────────────────────────── */
 #stats-overlay {
   position:fixed; inset:0; z-index:30;
   pointer-events:none;
@@ -128,24 +124,20 @@ video {
 }
 #stats-overlay.visible { opacity:1; }
 
-/* Individual stat nodes */
 .stat-node {
   position:absolute;
-  opacity:0;
-  transform:translateY(8px);
+  opacity:0; transform:translateY(8px);
   transition:opacity 0.5s ease, transform 0.5s ease;
 }
 #stats-overlay.visible .stat-node { opacity:1; transform:translateY(0); }
-
-/* Staggered delays */
-.stat-node:nth-child(1)  { transition-delay:0.1s; }
-.stat-node:nth-child(2)  { transition-delay:0.2s; }
-.stat-node:nth-child(3)  { transition-delay:0.3s; }
-.stat-node:nth-child(4)  { transition-delay:0.4s; }
-.stat-node:nth-child(5)  { transition-delay:0.5s; }
-.stat-node:nth-child(6)  { transition-delay:0.6s; }
-.stat-node:nth-child(7)  { transition-delay:0.7s; }
-.stat-node:nth-child(8)  { transition-delay:0.8s; }
+.stat-node:nth-child(1){ transition-delay:0.05s; }
+.stat-node:nth-child(2){ transition-delay:0.15s; }
+.stat-node:nth-child(3){ transition-delay:0.25s; }
+.stat-node:nth-child(4){ transition-delay:0.35s; }
+.stat-node:nth-child(5){ transition-delay:0.45s; }
+.stat-node:nth-child(6){ transition-delay:0.55s; }
+.stat-node:nth-child(7){ transition-delay:0.65s; }
+.stat-node:nth-child(8){ transition-delay:0.75s; }
 
 .stat-box {
   background:rgba(0,0,0,0.82);
@@ -153,12 +145,10 @@ video {
   border-left:2px solid var(--red);
   padding:10px 14px;
   backdrop-filter:blur(20px);
-  position:relative;
-  min-width:160px;
+  position:relative; min-width:160px;
 }
 .stat-box::after {
-  content:'';
-  position:absolute; top:0; right:0;
+  content:''; position:absolute; top:0; right:0;
   width:20px; height:20px;
   border-top:1px solid rgba(232,0,29,0.4);
   border-right:1px solid rgba(232,0,29,0.4);
@@ -174,41 +164,30 @@ video {
 }
 .stat-val em { font-size:10px; color:var(--dim2); font-style:normal; margin-left:2px; }
 .stat-bar { margin-top:5px; height:1.5px; background:rgba(255,255,255,0.06); }
-.stat-bar-fill { height:100%; background:var(--red); box-shadow:0 0 5px rgba(232,0,29,0.5); width:0%; transition:width 1.2s cubic-bezier(0.4,0,0.2,1); transition-delay:inherit; }
+.stat-bar-fill {
+  height:100%; background:var(--red);
+  box-shadow:0 0 5px rgba(232,0,29,0.5);
+  width:0%; transition:width 1.2s cubic-bezier(0.4,0,0.2,1);
+  transition-delay:inherit;
+}
 #stats-overlay.visible .stat-bar-fill { width:var(--w); }
 
-/* Connector lines (SVG) */
-#connector-svg {
-  position:absolute; inset:0; width:100%; height:100%;
-  pointer-events:none;
-}
-.cline {
-  stroke:var(--red);
-  stroke-width:1.2;
-  stroke-dasharray:5 3;
-  fill:none;
-  opacity:0;
-  transition:opacity 0.5s ease;
-}
+/* SVG connectors */
+#connector-svg { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
+.cline { stroke:var(--red); stroke-width:1.2; stroke-dasharray:5 3; fill:none; opacity:0; transition:opacity 0.5s ease; }
 #stats-overlay.visible .cline { opacity:0.7; }
-.cline:nth-child(1){ transition-delay:0.15s; }
-.cline:nth-child(2){ transition-delay:0.25s; }
-.cline:nth-child(3){ transition-delay:0.35s; }
-.cline:nth-child(4){ transition-delay:0.45s; }
-.cline:nth-child(5){ transition-delay:0.55s; }
-.cline:nth-child(6){ transition-delay:0.65s; }
-.cline:nth-child(7){ transition-delay:0.75s; }
-.cline:nth-child(8){ transition-delay:0.85s; }
-
-.cdot {
-  fill:var(--red);
-  opacity:0;
-  transition:opacity 0.4s ease;
-  filter:drop-shadow(0 0 3px var(--red));
-}
+.cline:nth-child(1){ transition-delay:0.1s; }
+.cline:nth-child(2){ transition-delay:0.2s; }
+.cline:nth-child(3){ transition-delay:0.3s; }
+.cline:nth-child(4){ transition-delay:0.4s; }
+.cline:nth-child(5){ transition-delay:0.5s; }
+.cline:nth-child(6){ transition-delay:0.6s; }
+.cline:nth-child(7){ transition-delay:0.7s; }
+.cline:nth-child(8){ transition-delay:0.8s; }
+.cdot { fill:var(--red); opacity:0; transition:opacity 0.4s ease; filter:drop-shadow(0 0 3px var(--red)); }
 #stats-overlay.visible .cdot { opacity:1; }
 
-/* ── SECTION LABEL ─────────────────────────────────────────── */
+/* Section tag */
 .section-tag {
   position:absolute;
   font-family:'Orbitron',monospace; font-weight:900;
@@ -218,72 +197,51 @@ video {
 }
 #stats-overlay.visible .section-tag { opacity:1; }
 
-/* ── BIG STAT (Pagani-style hero number) ───────────────────── */
+/* Hero stat */
 .hero-stat {
   position:absolute;
-  opacity:0;
+  opacity:0; transform:translateY(12px);
   transition:opacity 0.7s ease 0.4s, transform 0.7s ease 0.4s;
-  transform:translateY(12px);
 }
 #stats-overlay.visible .hero-stat { opacity:1; transform:translateY(0); }
-
-.hero-stat .h-label {
-  font-family:'Share Tech Mono',monospace;
-  font-size:9px; letter-spacing:0.3em; color:var(--dim2); text-transform:uppercase;
-}
-.hero-stat .h-val {
+.h-label { font-family:'Share Tech Mono',monospace; font-size:9px; letter-spacing:0.3em; color:#fff; text-transform:uppercase; text-shadow:0 1px 6px rgba(0,0,0,0.9); }
+.h-val {
   font-family:'Orbitron',monospace; font-weight:900;
-  font-size:clamp(36px,5vw,72px); color:var(--text); line-height:0.9;
-  text-shadow:0 0 40px rgba(232,0,29,0.3);
+  font-size:clamp(36px,5vw,72px); color:#fff; line-height:0.9;
+  text-shadow:0 0 40px rgba(232,0,29,0.4), 0 2px 8px rgba(0,0,0,0.95);
 }
-.hero-stat .h-unit {
-  font-family:'Barlow Condensed',sans-serif; font-weight:700;
-  font-size:clamp(14px,2vw,22px); color:var(--dim2); margin-left:4px;
-}
-.hero-stat .h-desc {
-  font-family:'Barlow Condensed',sans-serif; font-weight:300;
-  font-size:12px; color:var(--dim2); letter-spacing:0.1em;
-  margin-top:4px; font-style:italic;
-}
+.h-unit { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:clamp(14px,2vw,22px); color:#ccc; margin-left:4px; text-shadow:0 1px 6px rgba(0,0,0,0.9); }
+.h-desc { font-family:'Barlow Condensed',sans-serif; font-weight:400; font-size:12px; color:#ccc; letter-spacing:0.1em; margin-top:4px; font-style:italic; text-shadow:0 1px 6px rgba(0,0,0,0.9); }
 
-/* ── BOTTOM STATUS BAR ─────────────────────────────────────── */
+/* ── STATUS BAR ──────────────────────────────────────────── */
 .status-bar {
   position:fixed; bottom:0; left:0; right:0; z-index:50;
   height:38px;
   background:rgba(0,0,0,0.88);
   border-top:1px solid rgba(232,0,29,0.15);
-  display:flex; align-items:center; padding:0 32px;
-  gap:28px;
+  display:flex; align-items:center; padding:0 32px; gap:28px;
   backdrop-filter:blur(10px);
 }
 .sb-item {
   font-family:'Share Tech Mono',monospace;
-  font-size:12px; letter-spacing:0.12em; color:var(--dim2);
-  text-transform:uppercase;
-  display:flex; align-items:center; gap:6px;
+  font-size:12px; letter-spacing:0.12em; color:#ccc;
+  text-transform:uppercase; display:flex; align-items:center; gap:6px;
 }
 .sb-item b { color:var(--red); }
 .sb-sep { width:1px; height:14px; background:rgba(232,0,29,0.2); }
-
-/* ── CORNER DECORATIONS ────────────────────────────────────── */
-.corner {
-  position:fixed; z-index:20;
-  width:40px; height:40px;
-  pointer-events:none;
-}
-.corner.tl { top:16px; left:16px; border-top:1px solid rgba(232,0,29,0.2); border-left:1px solid rgba(232,0,29,0.2); }
-.corner.tr { top:16px; right:16px; border-top:1px solid rgba(232,0,29,0.2); border-right:1px solid rgba(232,0,29,0.2); }
-.corner.bl { bottom:36px; left:16px; border-bottom:1px solid rgba(232,0,29,0.2); border-left:1px solid rgba(232,0,29,0.2); }
-.corner.br { bottom:36px; right:16px; border-bottom:1px solid rgba(232,0,29,0.2); border-right:1px solid rgba(232,0,29,0.2); }
 </style>
 </head>
 <body>
 
-<!-- VIDEOS -->
-<div id="vid-wrap">
-  <video id="v1" src="clip1.mp4" autoplay loop muted playsinline></video>
-  <video id="v2" src="clip2.mp4" muted playsinline preload="auto"></video>
+<!-- LOADING -->
+<div id="loading">
+  <div class="ld-logo">GRID<span>-X</span></div>
+  <div class="ld-track"><div class="ld-fill" id="lf"></div></div>
+  <div class="ld-txt" id="lt">Loading Chassis Model…</div>
 </div>
+
+<!-- THREE.JS CANVAS -->
+<canvas id="cv"></canvas>
 
 <!-- OVERLAYS -->
 <div class="vignette"></div>
@@ -294,17 +252,14 @@ video {
 <div class="corner bl"></div>
 <div class="corner br"></div>
 
-<!-- GRID-X NAVBAR -->
+<!-- NAVBAR -->
 <link rel="stylesheet" href="index.css">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <style>
-  /* Lift navbar above video */
   .navbar { position:fixed; top:0; left:0; right:0; z-index:100; background:rgba(0,0,0,0.85) !important; backdrop-filter:blur(10px); }
-  /* Force black bg — override index.css */
   html, body { background:#000 !important; background-color:#000 !important; }
-  .container-fluid, .container, section, main { background:transparent !important; }
+  .container-fluid,.container,section,main { background:transparent !important; }
 </style>
-
 <nav class="navbar navbar-expand-lg navbar-light">
   <div class="container">
     <a class="navbar-brand" href="index.html">
@@ -327,50 +282,36 @@ video {
 
 <!-- STATS OVERLAY -->
 <div id="stats-overlay">
-
-  <!-- SVG CONNECTOR LINES -->
   <svg id="connector-svg" viewBox="0 0 1440 900" preserveAspectRatio="none">
-    <!-- Engine → stat -->
     <circle class="cdot" cx="820" cy="370" r="3"/>
-    <line class="cline" id="cl1" x1="820" y1="370" x2="1080" y2="220"/>
-    <!-- Rear Wing → stat -->
+    <line class="cline" x1="820" y1="370" x2="1080" y2="220"/>
     <circle class="cdot" cx="950" cy="210" r="3"/>
-    <line class="cline" id="cl2" x1="950" y1="210" x2="1080" y2="290"/>
-    <!-- Diffuser → stat -->
+    <line class="cline" x1="950" y1="210" x2="1080" y2="290"/>
     <circle class="cdot" cx="880" cy="510" r="3"/>
-    <line class="cline" id="cl3" x1="880" y1="510" x2="1080" y2="450"/>
-    <!-- Tyre → stat -->
+    <line class="cline" x1="880" y1="510" x2="1080" y2="450"/>
     <circle class="cdot" cx="760" cy="560" r="3"/>
-    <line class="cline" id="cl4" x1="760" y1="560" x2="1080" y2="530"/>
-    <!-- Front Wing → stat -->
+    <line class="cline" x1="760" y1="560" x2="1080" y2="530"/>
     <circle class="cdot" cx="420" cy="490" r="3"/>
-    <line class="cline" id="cl5" x1="420" y1="490" x2="300" y2="400"/>
-    <!-- Halo → stat -->
+    <line class="cline" x1="420" y1="490" x2="300" y2="400"/>
     <circle class="cdot" cx="600" cy="240" r="3"/>
-    <line class="cline" id="cl6" x1="600" y1="240" x2="300" y2="300"/>
-    <!-- Suspension → stat -->
+    <line class="cline" x1="600" y1="240" x2="300" y2="300"/>
     <circle class="cdot" cx="500" cy="430" r="3"/>
-    <line class="cline" id="cl7" x1="500" y1="430" x2="300" y2="490"/>
-    <!-- Weight → stat -->
+    <line class="cline" x1="500" y1="430" x2="300" y2="490"/>
     <circle class="cdot" cx="680" cy="470" r="3"/>
-    <line class="cline" id="cl8" x1="680" y1="470" x2="300" y2="570"/>
+    <line class="cline" x1="680" y1="470" x2="300" y2="570"/>
   </svg>
 
-  <!-- SECTION TAGS -->
   <div class="section-tag" style="top:10%;left:50%;transform:translateX(-50%);letter-spacing:0.8em;">
     FIA TECHNICAL REGULATIONS · 2026
   </div>
 
-  <!-- HERO STAT — Power -->
   <div class="hero-stat" style="bottom:12%;left:4%;">
     <div class="h-label">Total Power Output</div>
     <div class="h-val">1,000<span class="h-unit">bhp</span></div>
     <div class="h-desc">1.6L V6 Hybrid · MGU-K + MGU-H</div>
   </div>
 
-  <!-- RIGHT COLUMN STATS -->
-
-  <!-- Rear Wing -->
+  <!-- RIGHT -->
   <div class="stat-node" style="top:18%;right:6%;">
     <div class="stat-box">
       <div class="stat-lbl">Rear Wing Span</div>
@@ -378,8 +319,6 @@ video {
       <div class="stat-bar"><div class="stat-bar-fill" style="--w:95%"></div></div>
     </div>
   </div>
-
-  <!-- Engine -->
   <div class="stat-node" style="top:30%;right:6%;">
     <div class="stat-box">
       <div class="stat-lbl">Engine</div>
@@ -387,8 +326,6 @@ video {
       <div class="stat-bar"><div class="stat-bar-fill" style="--w:100%"></div></div>
     </div>
   </div>
-
-  <!-- RPM -->
   <div class="stat-node" style="top:43%;right:6%;">
     <div class="stat-box">
       <div class="stat-lbl">Max RPM</div>
@@ -396,8 +333,6 @@ video {
       <div class="stat-bar"><div class="stat-bar-fill" style="--w:88%"></div></div>
     </div>
   </div>
-
-  <!-- Diffuser -->
   <div class="stat-node" style="top:56%;right:6%;">
     <div class="stat-box">
       <div class="stat-lbl">Rear Tyre Width</div>
@@ -406,9 +341,7 @@ video {
     </div>
   </div>
 
-  <!-- LEFT COLUMN STATS -->
-
-  <!-- Front Wing -->
+  <!-- LEFT -->
   <div class="stat-node" style="top:28%;left:2%;">
     <div class="stat-box">
       <div class="stat-lbl">Halo Material</div>
@@ -416,8 +349,6 @@ video {
       <div class="stat-bar"><div class="stat-bar-fill" style="--w:60%"></div></div>
     </div>
   </div>
-
-  <!-- Halo -->
   <div class="stat-node" style="top:40%;left:2%;">
     <div class="stat-box">
       <div class="stat-lbl">Front Wing Span</div>
@@ -425,8 +356,6 @@ video {
       <div class="stat-bar"><div class="stat-bar-fill" style="--w:100%"></div></div>
     </div>
   </div>
-
-  <!-- Suspension -->
   <div class="stat-node" style="top:52%;left:2%;">
     <div class="stat-box">
       <div class="stat-lbl">Suspension</div>
@@ -434,8 +363,6 @@ video {
       <div class="stat-bar"><div class="stat-bar-fill" style="--w:50%"></div></div>
     </div>
   </div>
-
-  <!-- Weight -->
   <div class="stat-node" style="top:64%;left:2%;">
     <div class="stat-box">
       <div class="stat-lbl">Min. Weight</div>
@@ -443,12 +370,18 @@ video {
       <div class="stat-bar"><div class="stat-bar-fill" style="--w:72%"></div></div>
     </div>
   </div>
-
 </div>
 
-<!-- BUTTONS -->
-<button id="btn-inspect">⬡ &nbsp;INSPECT CHASSIS</button>
-<button id="btn-replay">↺ &nbsp;BACK</button>
+<!-- DRAG HINT -->
+<div id="drag-hint">
+  <span class="hint-arrow">⟵ ⟶</span>
+  DRAG TO ROTATE · SCROLL TO ZOOM
+</div>
+
+<!-- ROT INDICATOR -->
+<div id="rot-indicator">
+  ROT <b id="ri-deg">0°</b>
+</div>
 
 <!-- STATUS BAR -->
 <div class="status-bar">
@@ -465,76 +398,294 @@ video {
   <div class="sb-item">GRID-X <b>ANALYTICS</b></div>
 </div>
 
+<!-- THREE.JS + GLTF LOADER -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+
 <script>
-var v1 = document.getElementById('v1');
-var v2 = document.getElementById('v2');
-var stats = document.getElementById('stats-overlay');
-var btnInspect = document.getElementById('btn-inspect');
-var btnReplay  = document.getElementById('btn-replay');
-var inspecting = false;
+(function(){
+  var cv      = document.getElementById('cv');
+  var lf      = document.getElementById('lf');
+  var lt      = document.getElementById('lt');
+  var overlay = document.getElementById('stats-overlay');
+  var hint    = document.getElementById('drag-hint');
+  var riDeg   = document.getElementById('ri-deg');
 
-// ── INSPECT: switch to clip 2 + show stats
-btnInspect.addEventListener('click', function(){
-  if(inspecting) return;
-  inspecting = true;
+  var W = function(){ return window.innerWidth; };
+  var H = function(){ return window.innerHeight; };
 
-  // Hide inspect button
-  btnInspect.classList.add('hidden');
+  // ── RENDERER
+  var renderer = new THREE.WebGLRenderer({ canvas:cv, antialias:true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.setSize(W(), H());
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.toneMapping    = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.4;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type    = THREE.PCFSoftShadowMap;
+  renderer.setClearColor(0x000000, 1);
 
-  // Fade v1 out, v2 in
-  v1.style.opacity = '0';
-  v2.style.opacity = '1';
-  v2.style.pointerEvents = 'all';
+  window.addEventListener('resize', function(){
+    renderer.setSize(W(), H());
+    cam.aspect = W()/H();
+    cam.updateProjectionMatrix();
+  });
 
-  // Play clip 2 from start
-  v2.currentTime = 0;
-  v2.play();
+  // ── SCENE
+  var scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x000000);
+  scene.fog = new THREE.Fog(0x000000, 18, 35);
 
-  // Show stats after short delay (let clip start)
-  setTimeout(function(){
-    stats.classList.add('visible');
-  }, 600);
+  // ── CAMERA
+  var cam = new THREE.PerspectiveCamera(42, W()/H(), 0.1, 100);
+  cam.position.set(0, 1.8, 7);
+  cam.lookAt(0, 0.5, 0);
 
-  // Show replay button after stats appear
-  setTimeout(function(){
-    btnReplay.classList.add('visible');
-  }, 1200);
-});
+  // ── LIGHTING — studio setup for carbon/dark car
+  // Ambient — slight blue tint
+  scene.add(new THREE.AmbientLight(0x0a0e18, 2.5));
 
-// ── REPLAY: back to clip 1
-btnReplay.addEventListener('click', function(){
-  inspecting = false;
+  // Key light — warm from upper left
+  var key = new THREE.DirectionalLight(0xfff4e0, 4.5);
+  key.position.set(-5, 8, 4);
+  key.castShadow = true;
+  key.shadow.mapSize.set(2048, 2048);
+  key.shadow.camera.near = 0.5;
+  key.shadow.camera.far  = 30;
+  key.shadow.camera.left = -8;
+  key.shadow.camera.right= 8;
+  key.shadow.camera.top  = 6;
+  key.shadow.camera.bottom=-6;
+  scene.add(key);
 
-  // Hide stats first
-  stats.classList.remove('visible');
-  btnReplay.classList.remove('visible');
+  // Fill light — cool blue from right
+  var fill = new THREE.DirectionalLight(0x4080ff, 1.8);
+  fill.position.set(6, 3, -3);
+  scene.add(fill);
 
-  setTimeout(function(){
-    // Swap videos back
-    v2.pause();
-    v2.style.opacity = '0';
-    v2.style.pointerEvents = 'none';
-    v1.style.opacity = '1';
+  // Rim light — from behind, makes carbon pop
+  var rim = new THREE.DirectionalLight(0x80c8ff, 2.2);
+  rim.position.set(0, 2, -8);
+  scene.add(rim);
 
-    // Show inspect button again
-    btnInspect.classList.remove('hidden');
-  }, 500);
-});
+  // Ground bounce
+  var bounce = new THREE.DirectionalLight(0x1a2a40, 1.2);
+  bounce.position.set(0, -4, 0);
+  scene.add(bounce);
 
-// ── Auto-replay clip2 at end (loop it with stats showing)
-v2.addEventListener('ended', function(){
-  v2.currentTime = 0;
-  v2.play();
-});
+  // Top spot
+  var spot = new THREE.SpotLight(0xffffff, 3.0, 20, Math.PI/3.5, 0.3);
+  spot.position.set(0, 10, 2);
+  spot.castShadow = true;
+  spot.shadow.mapSize.set(1024, 1024);
+  scene.add(spot);
 
-// ── Keyboard shortcut: Space to toggle
-document.addEventListener('keydown', function(e){
-  if(e.code === 'Space'){
-    e.preventDefault();
-    if(!inspecting) btnInspect.click();
-    else btnReplay.click();
+  // ── FLOOR (reflective dark)
+  var floorMat = new THREE.MeshStandardMaterial({
+    color:0x080a0e, roughness:0.65, metalness:0.35
+  });
+  var floor = new THREE.Mesh(new THREE.CircleGeometry(10, 64), floorMat);
+  floor.rotation.x = -Math.PI/2;
+  floor.position.y = -0.01;
+  floor.receiveShadow = true;
+  scene.add(floor);
+
+  // Floor glow ring
+  var ringGeo = new THREE.RingGeometry(3.2, 3.24, 64);
+  var ringMat = new THREE.MeshBasicMaterial({
+    color:0xe8001d, side:THREE.DoubleSide, transparent:true, opacity:0.15
+  });
+  var ring = new THREE.Mesh(ringGeo, ringMat);
+  ring.rotation.x = -Math.PI/2;
+  ring.position.y = 0;
+  scene.add(ring);
+
+  // ── CAR PIVOT
+  var pivot = new THREE.Group();
+  scene.add(pivot);
+
+  // ── LOAD GLB
+  var loader = new THREE.GLTFLoader();
+  var carLoaded = false;
+
+  loader.load(
+    'f1car.glb',
+    function(gltf){
+      var car = gltf.scene;
+
+      // Auto-centre and scale the model
+      var box = new THREE.Box3().setFromObject(car);
+      var centre = new THREE.Vector3();
+      box.getCenter(centre);
+      var size = new THREE.Vector3();
+      box.getSize(size);
+
+      // Scale so car fits nicely — target ~5 units wide
+      var maxDim = Math.max(size.x, size.y, size.z);
+      var scale  = 4.5 / maxDim;
+      car.scale.setScalar(scale);
+
+      // Re-centre after scale
+      box.setFromObject(car);
+      box.getCenter(centre);
+      car.position.sub(centre);
+
+      // Lift off floor
+      box.setFromObject(car);
+      car.position.y -= box.min.y;
+
+      // Enable shadows on all meshes
+      car.traverse(function(child){
+        if(child.isMesh){
+          child.castShadow    = true;
+          child.receiveShadow = true;
+          // Boost material quality
+          if(child.material){
+            if(Array.isArray(child.material)){
+              child.material.forEach(function(m){ m.envMapIntensity = 1.2; });
+            } else {
+              child.material.envMapIntensity = 1.2;
+            }
+          }
+        }
+      });
+
+      pivot.add(car);
+      carLoaded = true;
+
+      // Dismiss loader
+      lf.style.width = '100%';
+      setTimeout(function(){
+        var ld = document.getElementById('loading');
+        ld.classList.add('fade');
+        setTimeout(function(){ ld.style.display='none'; }, 900);
+      }, 400);
+    },
+    function(xhr){
+      // Progress
+      if(xhr.lengthComputable){
+        var pct = Math.round((xhr.loaded / xhr.total) * 100);
+        lf.style.width = pct + '%';
+        lt.textContent = 'Loading Chassis Model… ' + pct + '%';
+      }
+    },
+    function(err){
+      lt.textContent = 'Error loading model. Check f1car.glb is in the frontend folder.';
+      console.error('GLB load error:', err);
+    }
+  );
+
+  // ── DRAG / ORBIT STATE
+  var drag   = false;
+  var prevX  = 0;
+  var prevY  = 0;
+  var rotY   = 0;   // total horizontal rotation
+  var rotX   = 0;   // vertical tilt (limited)
+  var zoomR  = 7.0; // camera distance
+  var statsVisible = false;
+  var hintHidden   = false;
+
+  var STATS_THRESHOLD = Math.PI; // 180 degrees
+
+  function updateCamera(){
+    var x = zoomR * Math.sin(rotX) * Math.sin(rotY + Math.PI/2) * 0 + 0;
+    // Simple: keep camera position, rotate the car pivot instead
+    cam.position.set(0, 1.2 + rotX * 1.5, zoomR);
+    cam.lookAt(0, 0.6, 0);
   }
-});
+
+  function updateStats(){
+    // Normalise rotation to 0–2PI
+    var norm = ((rotY % (Math.PI*2)) + Math.PI*2) % (Math.PI*2);
+    var deg  = Math.round(norm * 180 / Math.PI);
+    riDeg.textContent = deg + '°';
+
+    // Show stats when past 180°
+    var shouldShow = (norm > STATS_THRESHOLD && norm < Math.PI * 1.85);
+
+    if(shouldShow && !statsVisible){
+      statsVisible = true;
+      overlay.classList.add('visible');
+    } else if(!shouldShow && statsVisible){
+      statsVisible = false;
+      overlay.classList.remove('visible');
+    }
+  }
+
+  // Mouse events
+  cv.addEventListener('mousedown', function(e){
+    drag  = true;
+    prevX = e.clientX;
+    prevY = e.clientY;
+    document.body.classList.add('dragging');
+    if(!hintHidden){ hint.classList.add('hidden'); hintHidden=true; }
+  });
+  window.addEventListener('mouseup',   function(){ drag=false; document.body.classList.remove('dragging'); });
+  window.addEventListener('mousemove', function(e){
+    if(!drag) return;
+    var dx = e.clientX - prevX;
+    var dy = e.clientY - prevY;
+    rotY += dx * 0.008;
+    rotX  = Math.max(-0.4, Math.min(0.4, rotX + dy * 0.004));
+    prevX = e.clientX;
+    prevY = e.clientY;
+    pivot.rotation.y = rotY;
+    updateCamera();
+    updateStats();
+  });
+
+  // Scroll to zoom
+  cv.addEventListener('wheel', function(e){
+    zoomR = Math.max(2.5, Math.min(14, zoomR + e.deltaY * 0.006));
+    updateCamera();
+  }, {passive:true});
+
+  // Touch
+  var lt2 = null;
+  cv.addEventListener('touchstart',  function(e){ lt2=e.touches[0]; if(!hintHidden){ hint.classList.add('hidden'); hintHidden=true; } });
+  cv.addEventListener('touchmove',   function(e){
+    if(!lt2) return;
+    var dx = e.touches[0].clientX - lt2.clientX;
+    var dy = e.touches[0].clientY - lt2.clientY;
+    rotY += dx * 0.01;
+    rotX  = Math.max(-0.4, Math.min(0.4, rotX + dy * 0.005));
+    lt2 = e.touches[0];
+    pivot.rotation.y = rotY;
+    updateCamera();
+    updateStats();
+    e.preventDefault();
+  }, {passive:false});
+  cv.addEventListener('touchend', function(){ lt2=null; });
+
+  // ── AUTO-ROTATE on load (slow, stops on first drag)
+  var autoSpin    = true;
+  var autoSpeed   = 0.003;
+  var pulse       = 0;
+
+  cv.addEventListener('mousedown', function(){ autoSpin=false; }, {once:true});
+  cv.addEventListener('touchstart', function(){ autoSpin=false; }, {once:true});
+
+  // ── RENDER LOOP
+  (function loop(){
+    requestAnimationFrame(loop);
+    pulse += 0.016;
+
+    if(autoSpin && carLoaded){
+      rotY += autoSpeed;
+      pivot.rotation.y = rotY;
+      updateStats();
+    }
+
+    // Pulse ring glow
+    ring.material.opacity = 0.08 + 0.08 * Math.sin(pulse * 1.4);
+
+    renderer.render(scene, cam);
+  })();
+
+  // Initial progress bar nudge
+  setTimeout(function(){ lf.style.width='15%'; }, 100);
+
+})();
 </script>
 </body>
 </html>

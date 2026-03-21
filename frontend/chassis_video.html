@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>GRID-X | Chassis Viewer</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Barlow+Condensed:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap');
+:root{--red:#e8001d;--red2:#ff3344;--gold:#c8a84b;--text:#eaeaec;--dim:#4a4a55;--dim2:#7a7a88;}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;background:#000;color:var(--text);font-family:'Barlow Condensed',sans-serif;overflow:hidden;user-select:none;}
+#vid-wrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;}
+video{width:80%;height:80%;object-fit:contain;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);transition:opacity 0.5s ease;-webkit-mask-image:linear-gradient(to right,transparent 0%,black 12%,black 88%,transparent 100%),linear-gradient(to bottom,transparent 0%,black 10%,black 88%,transparent 100%);-webkit-mask-composite:source-in;mask-image:linear-gradient(to right,transparent 0%,black 12%,black 88%,transparent 100%),linear-gradient(to bottom,transparent 0%,black 10%,black 88%,transparent 100%);mask-composite:intersect;}
+#v1{opacity:1;}#v2{opacity:0;pointer-events:none;}
+.grain{position:fixed;inset:0;pointer-events:none;z-index:5;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");opacity:0.35;mix-blend-mode:overlay;}
+.scan{position:fixed;inset:0;pointer-events:none;z-index:6;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.04) 2px,rgba(0,0,0,0.04) 4px);}
+.vignette{position:fixed;inset:0;pointer-events:none;z-index:4;background:radial-gradient(ellipse 85% 85% at 50% 50%,transparent 40%,rgba(0,0,0,0.92) 100%);}
+#btn-inspect{position:fixed;bottom:32px;left:50%;transform:translateX(-50%);z-index:60;font-family:'Orbitron',monospace;font-weight:700;font-size:10px;letter-spacing:0.4em;text-transform:uppercase;padding:14px 36px;border:1px solid var(--red);background:rgba(0,0,0,0.7);color:var(--text);cursor:pointer;transition:all 0.25s;backdrop-filter:blur(10px);clip-path:polygon(12px 0%,100% 0%,calc(100% - 12px) 100%,0% 100%);}
+#btn-inspect::before{content:'';position:absolute;inset:0;background:var(--red);clip-path:polygon(12px 0%,100% 0%,calc(100% - 12px) 100%,0% 100%);opacity:0;transition:opacity 0.25s;z-index:-1;}
+#btn-inspect:hover::before{opacity:0.12;}#btn-inspect:hover{box-shadow:0 0 24px rgba(232,0,29,0.3);letter-spacing:0.5em;}
+#btn-inspect.hidden{opacity:0;pointer-events:none;transform:translateX(-50%) translateY(20px);transition:all 0.4s;}
+#btn-replay{position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(20px);z-index:60;font-family:'Orbitron',monospace;font-weight:700;font-size:10px;letter-spacing:0.4em;text-transform:uppercase;padding:14px 36px;border:1px solid rgba(232,0,29,0.3);background:rgba(0,0,0,0.7);color:var(--dim2);cursor:pointer;transition:all 0.4s;backdrop-filter:blur(10px);clip-path:polygon(12px 0%,100% 0%,calc(100% - 12px) 100%,0% 100%);opacity:0;pointer-events:none;}
+#btn-replay.visible{opacity:1;pointer-events:all;transform:translateX(-50%) translateY(0);}
+#btn-replay:hover{border-color:var(--red);color:var(--text);box-shadow:0 0 20px rgba(232,0,29,0.2);}
+#stats-overlay{position:fixed;inset:0;z-index:30;pointer-events:none;opacity:0;transition:opacity 0.6s ease;}
+#stats-overlay.visible{opacity:1;}
+.stat-node{position:absolute;opacity:0;transform:translateY(8px);transition:opacity 0.5s ease,transform 0.5s ease;}
+#stats-overlay.visible .stat-node{opacity:1;transform:translateY(0);}
+.stat-node:nth-child(1){transition-delay:0.1s;}.stat-node:nth-child(2){transition-delay:0.2s;}.stat-node:nth-child(3){transition-delay:0.3s;}.stat-node:nth-child(4){transition-delay:0.4s;}.stat-node:nth-child(5){transition-delay:0.5s;}.stat-node:nth-child(6){transition-delay:0.6s;}.stat-node:nth-child(7){transition-delay:0.7s;}.stat-node:nth-child(8){transition-delay:0.8s;}
+.stat-box{background:rgba(0,0,0,0.82);border:1px solid rgba(232,0,29,0.25);border-left:2px solid var(--red);padding:10px 14px;backdrop-filter:blur(20px);position:relative;min-width:160px;}
+.stat-box::after{content:'';position:absolute;top:0;right:0;width:20px;height:20px;border-top:1px solid rgba(232,0,29,0.4);border-right:1px solid rgba(232,0,29,0.4);}
+.stat-lbl{font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:0.15em;color:var(--dim2);text-transform:uppercase;margin-bottom:4px;}
+.stat-val{font-family:'Orbitron',monospace;font-weight:700;font-size:20px;color:var(--text);line-height:1;}
+.stat-val em{font-size:10px;color:var(--dim2);font-style:normal;margin-left:2px;}
+.stat-bar{margin-top:5px;height:1.5px;background:rgba(255,255,255,0.06);}
+.stat-bar-fill{height:100%;background:var(--red);box-shadow:0 0 5px rgba(232,0,29,0.5);width:0%;transition:width 1.2s cubic-bezier(0.4,0,0.2,1);transition-delay:inherit;}
+#stats-overlay.visible .stat-bar-fill{width:var(--w);}
+#connector-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;}
+.cline{stroke:var(--red);stroke-width:1.2;stroke-dasharray:5 3;fill:none;opacity:0;transition:opacity 0.5s ease;}
+#stats-overlay.visible .cline{opacity:0.7;}
+.cline:nth-child(1){transition-delay:0.15s;}.cline:nth-child(2){transition-delay:0.25s;}.cline:nth-child(3){transition-delay:0.35s;}.cline:nth-child(4){transition-delay:0.45s;}.cline:nth-child(5){transition-delay:0.55s;}.cline:nth-child(6){transition-delay:0.65s;}.cline:nth-child(7){transition-delay:0.75s;}.cline:nth-child(8){transition-delay:0.85s;}
+.cdot{fill:var(--red);opacity:0;transition:opacity 0.4s ease;filter:drop-shadow(0 0 3px var(--red));}
+#stats-overlay.visible .cdot{opacity:1;}
+.section-tag{position:absolute;font-family:'Orbitron',monospace;font-weight:900;font-size:13px;letter-spacing:0.45em;text-transform:uppercase;color:var(--red);opacity:0;transition:opacity 0.5s ease 0.2s;}
+#stats-overlay.visible .section-tag{opacity:1;}
+.hero-stat{position:absolute;opacity:0;transition:opacity 0.7s ease 0.4s,transform 0.7s ease 0.4s;transform:translateY(12px);}
+#stats-overlay.visible .hero-stat{opacity:1;transform:translateY(0);}
+.hero-stat .h-label{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:0.3em;color:#fff;text-transform:uppercase;}
+.hero-stat .h-val{font-family:'Orbitron',monospace;font-weight:900;font-size:clamp(36px,5vw,72px);color:#fff;line-height:0.9;text-shadow:0 0 40px rgba(232,0,29,0.3);}
+.hero-stat .h-unit{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:clamp(14px,2vw,22px);color:#ccc;margin-left:4px;}
+.hero-stat .h-desc{font-family:'Barlow Condensed',sans-serif;font-weight:300;font-size:12px;color:#ccc;letter-spacing:0.1em;margin-top:4px;font-style:italic;}
+.status-bar{position:fixed;bottom:0;left:0;right:0;z-index:50;height:38px;background:rgba(0,0,0,0.88);border-top:1px solid rgba(232,0,29,0.15);display:flex;align-items:center;padding:0 32px;gap:28px;backdrop-filter:blur(10px);}
+.sb-item{font-family:'Share Tech Mono',monospace;font-size:12px;letter-spacing:0.12em;color:#ccc;text-transform:uppercase;display:flex;align-items:center;gap:6px;}
+.sb-item b{color:var(--red);}
+.sb-sep{width:1px;height:14px;background:rgba(232,0,29,0.2);}
+.corner{position:fixed;z-index:20;width:40px;height:40px;pointer-events:none;}
+.corner.tl{top:16px;left:16px;border-top:1px solid rgba(232,0,29,0.2);border-left:1px solid rgba(232,0,29,0.2);}
+.corner.tr{top:16px;right:16px;border-top:1px solid rgba(232,0,29,0.2);border-right:1px solid rgba(232,0,29,0.2);}
+.corner.bl{bottom:36px;left:16px;border-bottom:1px solid rgba(232,0,29,0.2);border-left:1px solid rgba(232,0,29,0.2);}
+.corner.br{bottom:36px;right:16px;border-bottom:1px solid rgba(232,0,29,0.2);border-right:1px solid rgba(232,0,29,0.2);}
+</style>
+</head>
+<body>
+
+<div id="vid-wrap">
+  <video id="v1" src="clip1.mp4" autoplay loop muted playsinline></video>
+  <video id="v2" src="clip2.mp4" muted playsinline preload="auto"></video>
+</div>
+
+<div class="vignette"></div>
+<div class="grain"></div>
+<div class="scan"></div>
+<div class="corner tl"></div>
+<div class="corner tr"></div>
+<div class="corner bl"></div>
+<div class="corner br"></div>
+
+<link rel="stylesheet" href="index.css">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>
+  .navbar{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(0,0,0,0.85) !important;backdrop-filter:blur(10px);}
+  html,body{background:#000 !important;background-color:#000 !important;}
+  .container-fluid,.container,section,main{background:transparent !important;}
+</style>
+
+<nav class="navbar navbar-expand-lg navbar-light">
+  <div class="container">
+    <a class="navbar-brand" href="index.html">
+      <img src="image_folder/logo for now.jpg" alt="Logo" width="260" height="100">
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+      <ul class="navbar-nav">
+        <li class="nav-item"><a class="nav-link inactive" href="index.html">Home</a></li>
+        <li class="nav-item"><a class="nav-link inactive" href="pitwall.html">Pit Wall</a></li>
+        <li class="nav-item"><a class="nav-link inactive" href="About_us.html">About Us</a></li>
+        <li class="nav-item"><a class="nav-link active" href="chassis.html">Chassis</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<div id="stats-overlay">
+  <svg id="connector-svg" viewBox="0 0 1440 900" preserveAspectRatio="none">
+    <circle class="cdot" cx="820" cy="370" r="3"/><line class="cline" x1="820" y1="370" x2="1080" y2="220"/>
+    <circle class="cdot" cx="950" cy="210" r="3"/><line class="cline" x1="950" y1="210" x2="1080" y2="290"/>
+    <circle class="cdot" cx="880" cy="510" r="3"/><line class="cline" x1="880" y1="510" x2="1080" y2="450"/>
+    <circle class="cdot" cx="760" cy="560" r="3"/><line class="cline" x1="760" y1="560" x2="1080" y2="530"/>
+    <circle class="cdot" cx="420" cy="490" r="3"/><line class="cline" x1="420" y1="490" x2="300" y2="400"/>
+    <circle class="cdot" cx="600" cy="240" r="3"/><line class="cline" x1="600" y1="240" x2="300" y2="300"/>
+    <circle class="cdot" cx="500" cy="430" r="3"/><line class="cline" x1="500" y1="430" x2="300" y2="490"/>
+    <circle class="cdot" cx="680" cy="470" r="3"/><line class="cline" x1="680" y1="470" x2="300" y2="570"/>
+  </svg>
+  <div class="section-tag" style="top:10%;left:50%;transform:translateX(-50%);letter-spacing:0.8em;">FIA TECHNICAL REGULATIONS · 2026</div>
+  <div class="hero-stat" style="bottom:12%;left:4%;">
+    <div class="h-label">Total Power Output</div>
+    <div class="h-val">1,000<span class="h-unit">bhp</span></div>
+    <div class="h-desc">1.6L V6 Hybrid · MGU-K + MGU-H</div>
+  </div>
+  <div class="stat-node" style="top:18%;right:6%;"><div class="stat-box"><div class="stat-lbl">Rear Wing Span</div><div class="stat-val">950<em>mm</em></div><div class="stat-bar"><div class="stat-bar-fill" style="--w:95%"></div></div></div></div>
+  <div class="stat-node" style="top:30%;right:6%;"><div class="stat-box"><div class="stat-lbl">Engine</div><div class="stat-val">1.6<em>L V6 Turbo</em></div><div class="stat-bar"><div class="stat-bar-fill" style="--w:100%"></div></div></div></div>
+  <div class="stat-node" style="top:43%;right:6%;"><div class="stat-box"><div class="stat-lbl">Max RPM</div><div class="stat-val">15,000<em>rpm</em></div><div class="stat-bar"><div class="stat-bar-fill" style="--w:88%"></div></div></div></div>
+  <div class="stat-node" style="top:56%;right:6%;"><div class="stat-box"><div class="stat-lbl">Rear Tyre Width</div><div class="stat-val">405<em>mm</em></div><div class="stat-bar"><div class="stat-bar-fill" style="--w:78%"></div></div></div></div>
+  <div class="stat-node" style="top:28%;left:2%;"><div class="stat-box"><div class="stat-lbl">Halo Material</div><div class="stat-val">Ti<em>Titanium</em></div><div class="stat-bar"><div class="stat-bar-fill" style="--w:60%"></div></div></div></div>
+  <div class="stat-node" style="top:40%;left:2%;"><div class="stat-box"><div class="stat-lbl">Front Wing Span</div><div class="stat-val">2000<em>mm</em></div><div class="stat-bar"><div class="stat-bar-fill" style="--w:100%"></div></div></div></div>
+  <div class="stat-node" style="top:52%;left:2%;"><div class="stat-box"><div class="stat-lbl">Suspension</div><div class="stat-val">Push<em>/ Pull rod</em></div><div class="stat-bar"><div class="stat-bar-fill" style="--w:50%"></div></div></div></div>
+  <div class="stat-node" style="top:64%;left:2%;"><div class="stat-box"><div class="stat-lbl">Min. Weight</div><div class="stat-val">800<em>kg</em></div><div class="stat-bar"><div class="stat-bar-fill" style="--w:72%"></div></div></div></div>
+</div>
+
+<button id="btn-inspect">⬡ &nbsp;INSPECT CHASSIS</button>
+<button id="btn-replay">↺ &nbsp;BACK</button>
+
+<div class="status-bar">
+  <div class="sb-item">CHASSIS <b>FIA-2026</b></div><div class="sb-sep"></div>
+  <div class="sb-item">REG CLASS <b>FORMULA ONE</b></div><div class="sb-sep"></div>
+  <div class="sb-item">POWER UNIT <b>1.6L V6 HYBRID</b></div><div class="sb-sep"></div>
+  <div class="sb-item">DOWNFORCE <b>3.5× BODY WEIGHT</b></div><div class="sb-sep"></div>
+  <div class="sb-item">WHEELBASE <b>3700mm</b></div><div class="sb-sep"></div>
+  <div class="sb-item">GRID-X <b>ANALYTICS</b></div>
+</div>
+
+<script>
+var v1=document.getElementById('v1'),v2=document.getElementById('v2'),stats=document.getElementById('stats-overlay'),btnInspect=document.getElementById('btn-inspect'),btnReplay=document.getElementById('btn-replay'),inspecting=false;
+btnInspect.addEventListener('click',function(){if(inspecting)return;inspecting=true;btnInspect.classList.add('hidden');v1.style.opacity='0';v2.style.opacity='1';v2.style.pointerEvents='all';v2.currentTime=0;v2.play();setTimeout(function(){stats.classList.add('visible');},600);setTimeout(function(){btnReplay.classList.add('visible');},1200);});
+btnReplay.addEventListener('click',function(){inspecting=false;stats.classList.remove('visible');btnReplay.classList.remove('visible');setTimeout(function(){v2.pause();v2.style.opacity='0';v2.style.pointerEvents='none';v1.style.opacity='1';btnInspect.classList.remove('hidden');},500);});
+v2.addEventListener('ended',function(){v2.currentTime=0;v2.play();});
+document.addEventListener('keydown',function(e){if(e.code==='Space'){e.preventDefault();if(!inspecting)btnInspect.click();else btnReplay.click();}});
+</script>
+</body>
+</html>
